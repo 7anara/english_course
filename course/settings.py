@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'course_app',
     'rest_framework',
+    "phonenumber_field",
 
 
 ]
@@ -113,6 +114,8 @@ STATIC_URL = 'static/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
+
+AUTH_USER_MODEL = 'course_app.UserProfile'
 
 
 
