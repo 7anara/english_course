@@ -7,6 +7,7 @@ from .models import (
 )
 
 
+
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField(write_only=True)
@@ -20,17 +21,51 @@ class UserProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ['register_date']
 
 
-class GroupSerializer(serializers.ModelSerializer):
+
+class GroupListSerializer(serializers.ModelSerializer):
     students_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Group
-        fields = ['id', 'group_name', 'group_image', 'level',
-                  'invite_code', 'created_date', 'students_count']
+        fields = ['id', 'group_name', 'group_image',
+                  'level', 'invite_code', 'created_date', 'students_count']
         read_only_fields = ['invite_code', 'created_date']
 
     def get_students_count(self, obj):
         return obj.students.filter(status='active').count()
+
+
+class GroupDetailSerializer(serializers.ModelSerializer):
+    students_count = serializers.SerializerMethodField()
+    materials_count = serializers.SerializerMethodField()
+    homeworks_count = serializers.SerializerMethodField()
+    tests_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Group
+        fields = ['id', 'group_name', 'group_image', 'level',
+                  'invite_code', 'created_date', 'students_count',
+                  'materials_count', 'homeworks_count', 'tests_count']
+        read_only_fields = ['invite_code', 'created_date']
+
+    def get_students_count(self, obj):
+        return obj.students.filter(status='active').count()
+
+    def get_materials_count(self, obj):
+        return obj.materials.count()
+
+    def get_homeworks_count(self, obj):
+        return obj.homeworks.count()
+
+    def get_tests_count(self, obj):
+        return obj.tests.count()
+
+
+class GroupCreateUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Group
+        fields = ['id', 'group_name', 'group_image', 'level']
+
 
 
 class StudentJoinSerializer(serializers.Serializer):
@@ -38,7 +73,7 @@ class StudentJoinSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
 
-class StudentSerializer(serializers.ModelSerializer):
+class StudentListSerializer(serializers.ModelSerializer):
     group_name = serializers.CharField(source='group.group_name', read_only=True)
 
     class Meta:
@@ -48,16 +83,46 @@ class StudentSerializer(serializers.ModelSerializer):
         read_only_fields = ['joined_at']
 
 
+class StudentDetailSerializer(serializers.ModelSerializer):
+    group_name = serializers.CharField(source='group.group_name', read_only=True)
+    group_level = serializers.CharField(source='group.level', read_only=True)
+    rating = serializers.SerializerMethodField()
+    homework_answers_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Student
+        fields = ['id', 'full_name', 'email', 'group', 'group_name',
+                  'group_level', 'status', 'joined_at',
+                  'rating', 'homework_answers_count']
+        read_only_fields = ['joined_at']
+
+    def get_rating(self, obj):
+        rating = obj.ratings.first()
+        if rating:
+            return {'rank': rating.rank, 'note': rating.note}
+        return None
+
+    def get_homework_answers_count(self, obj):
+        return obj.homework_answers.count()
+
+
 class StudentAddToGroupSerializer(serializers.Serializer):
     group_id = serializers.IntegerField()
 
 
-class MaterialSerializer(serializers.ModelSerializer):
+
+class MaterialListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Material
+        fields = ['id', 'group', 'title', 'created_at']
+        read_only_fields = ['created_at']
+
+
+class MaterialDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Material
         fields = ['id', 'group', 'title', 'description', 'file', 'created_at']
         read_only_fields = ['created_at']
-
 
 class HomeworkAnswerSerializer(serializers.ModelSerializer):
     student_name = serializers.CharField(source='student.full_name', read_only=True)
@@ -69,13 +134,27 @@ class HomeworkAnswerSerializer(serializers.ModelSerializer):
         read_only_fields = ['submitted_at']
 
 
-class HomeworkSerializer(serializers.ModelSerializer):
+class HomeworkListSerializer(serializers.ModelSerializer):
     answers_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Homework
-        fields = ['id', 'group', 'title', 'description',
-                  'file', 'due_date', 'created_at', 'answers_count']
+        fields = ['id', 'group', 'title', 'due_date',
+                  'created_at', 'answers_count']
+        read_only_fields = ['created_at']
+
+    def get_answers_count(self, obj):
+        return obj.answers.count()
+
+
+class HomeworkDetailSerializer(serializers.ModelSerializer):
+    answers_count = serializers.SerializerMethodField()
+    answers = HomeworkAnswerSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Homework
+        fields = ['id', 'group', 'title', 'description', 'file',
+                  'due_date', 'created_at', 'answers_count', 'answers']
         read_only_fields = ['created_at']
 
     def get_answers_count(self, obj):
@@ -96,6 +175,7 @@ class HomeworkStudentSerializer(serializers.ModelSerializer):
         if student_email:
             return obj.answers.filter(student__email=student_email).exists()
         return False
+
 
 
 class TestAnswerSerializer(serializers.ModelSerializer):
@@ -126,7 +206,19 @@ class TestQuestionStudentSerializer(serializers.ModelSerializer):
         fields = ['id', 'text', 'points', 'answers']
 
 
-class CourseTestSerializer(serializers.ModelSerializer):
+class CourseTestListSerializer(serializers.ModelSerializer):
+    questions_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CourseTest
+        fields = ['id', 'group', 'title', 'created_at', 'questions_count']
+        read_only_fields = ['created_at']
+
+    def get_questions_count(self, obj):
+        return obj.questions.count()
+
+
+class CourseTestDetailSerializer(serializers.ModelSerializer):
     questions = TestQuestionSerializer(many=True, read_only=True)
 
     class Meta:
@@ -156,6 +248,7 @@ class StudentTestResultSerializer(serializers.ModelSerializer):
 
     def get_percentage(self, obj):
         return obj.percentage()
+
 
 
 class RatingSerializer(serializers.ModelSerializer):
