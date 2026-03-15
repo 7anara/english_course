@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import (
     UserProfile, Group, Student, Material,
     Homework, HomeworkAnswer, CourseTest,
@@ -7,10 +8,36 @@ from .models import (
 )
 
 
-
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField(write_only=True)
+
+
+class RegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+    password_confirm = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = UserProfile
+        fields = [
+            'id', 'username', 'password', 'password_confirm',
+            'full_name', 'email', 'avatar', 'phone_number',
+            'bio', 'register_date'
+        ]
+        read_only_fields = ['register_date']
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password_confirm']:
+            raise serializers.ValidationError("Пароли не совпадают")
+        return attrs
+
+    def create(self, validated_data):
+        validated_data.pop('password_confirm')
+        password = validated_data.pop('password')
+        user = UserProfile(**validated_data)
+        user.set_password(password)
+        user.save()
+        return user
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -20,6 +47,33 @@ class UserProfileSerializer(serializers.ModelSerializer):
                   'avatar', 'phone_number', 'bio', 'register_date']
         read_only_fields = ['register_date']
 
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    username_field = UserProfile.USERNAME_FIELD
+
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['user_id'] = user.id
+        token['username'] = user.username
+        token['full_name'] = user.full_name
+        token['email'] = user.email
+        return token
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        data['user'] = {
+            'id': self.user.id,
+            'username': self.user.username,
+            'full_name': self.user.full_name,
+            'email': self.user.email,
+            'avatar': self.user.avatar.url if self.user.avatar else None,
+            'phone_number': str(self.user.phone_number) if self.user.phone_number else None,
+            'bio': self.user.bio,
+            'register_date': self.user.register_date,
+        }
+        return data
 
 
 class GroupListSerializer(serializers.ModelSerializer):
@@ -67,7 +121,6 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
         fields = ['id', 'group_name', 'group_image', 'level']
 
 
-
 class StudentJoinSerializer(serializers.Serializer):
     full_name = serializers.CharField(max_length=200)
     email = serializers.EmailField()
@@ -110,7 +163,6 @@ class StudentAddToGroupSerializer(serializers.Serializer):
     group_id = serializers.IntegerField()
 
 
-
 class MaterialListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Material
@@ -123,6 +175,7 @@ class MaterialDetailSerializer(serializers.ModelSerializer):
         model = Material
         fields = ['id', 'group', 'title', 'description', 'file', 'created_at']
         read_only_fields = ['created_at']
+
 
 class HomeworkAnswerSerializer(serializers.ModelSerializer):
     student_name = serializers.CharField(source='student.full_name', read_only=True)
@@ -175,7 +228,6 @@ class HomeworkStudentSerializer(serializers.ModelSerializer):
         if student_email:
             return obj.answers.filter(student__email=student_email).exists()
         return False
-
 
 
 class TestAnswerSerializer(serializers.ModelSerializer):
@@ -248,7 +300,6 @@ class StudentTestResultSerializer(serializers.ModelSerializer):
 
     def get_percentage(self, obj):
         return obj.percentage()
-
 
 
 class RatingSerializer(serializers.ModelSerializer):
