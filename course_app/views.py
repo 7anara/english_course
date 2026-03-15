@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth import authenticate
+from .permission import IsTeacherPermission, IsOwnerPermission
 
 
 from .models import (UserProfile, Group, Student, Material,
@@ -106,6 +107,7 @@ class GroupDetailAPIView(generics.RetrieveAPIView):
 class GroupViewSet(viewsets.ModelViewSet):
     queryset = Group.objects.all()
     serializer_class = GroupCreateUpdateSerializer
+    permission_classes = [IsAuthenticated, IsOwnerPermission]
 
     def get_queryset(self):
         return Group.objects.filter(teacher=self.request.user)
@@ -202,6 +204,7 @@ class MaterialDetailAPIView(generics.RetrieveAPIView):
 class MaterialViewSet(viewsets.ModelViewSet):
     queryset = Material.objects.all()
     serializer_class = MaterialDetailSerializer
+    permission_classes = [IsAuthenticated, IsOwnerPermission]
 
 
     def get_queryset(self):
@@ -266,7 +269,7 @@ class HomeworkViewSet(viewsets.ModelViewSet):
 
     queryset = Homework.objects.all()
     serializer_class = HomeworkDetailSerializer
-
+    permission_classes = [IsAuthenticated, IsOwnerPermission]
 
     def get_queryset(self):
         return Homework.objects.filter(group__teacher=self.request.user)
@@ -389,7 +392,7 @@ class CourseTestDetailAPIView(generics.RetrieveAPIView):
 class CourseTestViewSet(viewsets.ModelViewSet):
     queryset = CourseTest.objects.all()
     serializer_class = CourseTestDetailSerializer
-
+    permission_classes = [IsAuthenticated, IsOwnerPermission]
 
     def get_queryset(self):
         return CourseTest.objects.filter(group__teacher=self.request.user)
