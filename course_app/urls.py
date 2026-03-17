@@ -23,8 +23,7 @@ router.register(r'testanswers', TestAnswerViewSet, basename='testanswer')
 router.register(r'ratings', RatingViewSet, basename='rating')
 
 urlpatterns = [
-    path('auth/login/', LoginView.as_view(), name='login'),
-    path('auth/logout/', LogoutView.as_view(), name='logout'),
+
     path('users/', UserProfileListAPIView.as_view(), name='user-list'),
     path('users/me/', UserProfileDetailAPIView.as_view(), name='user-detail'),
     path('groups/<int:group_id>/', GroupDetailAPIView.as_view(), name='group-detail'),
