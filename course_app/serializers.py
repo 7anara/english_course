@@ -26,11 +26,13 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
     def validate(self, data):
-        user = authenticate(**data)
+        user = authenticate(
+            username=data.get('username'),
+            password=data.get('password')
+        )
         if user and user.is_active:
             return user
         raise serializers.ValidationError("Неверные учетные данные")
-
     def to_representation(self, instance):
         refresh = RefreshToken.for_user(instance)
         return {
@@ -296,3 +298,5 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
         fields = ['id', 'user', 'homework', 'text', 'rating', 'created_date']
         read_only_fields = ['created_date']
+
+
