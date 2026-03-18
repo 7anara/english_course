@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    LoginView, LogoutView, UserProfileListAPIView, UserProfileDetailAPIView,
+    LoginView, LogoutView, UserRegisterSerializer, UserProfileDetailAPIView,
     GroupListAPIView, GroupDetailAPIView, GroupViewSet, GroupStudentListAPIView,
     StudentDetailAPIView, JoinGroupView,
     MaterialListAPIView, MaterialDetailAPIView, MaterialViewSet, StudentMaterialListAPIView,
@@ -24,7 +24,7 @@ router.register(r'ratings', RatingViewSet, basename='rating')
 
 urlpatterns = [
 
-    path('users/', UserProfileListAPIView.as_view(), name='user-list'),
+
     path('users/me/', UserProfileDetailAPIView.as_view(), name='user-detail'),
     path('groups/<int:group_id>/', GroupDetailAPIView.as_view(), name='group-detail'),
     path('groups/<int:group_id>/students/', GroupStudentListAPIView.as_view(), name='group-students'),
