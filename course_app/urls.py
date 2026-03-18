@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    LoginView, LogoutView, UserRegisterSerializer, UserProfileDetailAPIView,
+    LoginView, LogoutView, RegisterView, UserProfileDetailAPIView,
     GroupListAPIView, GroupDetailAPIView, GroupViewSet, GroupStudentListAPIView,
     StudentDetailAPIView, JoinGroupView,
     MaterialListAPIView, MaterialDetailAPIView, MaterialViewSet, StudentMaterialListAPIView,
@@ -23,7 +23,11 @@ router.register(r'testanswers', TestAnswerViewSet, basename='testanswer')
 router.register(r'ratings', RatingViewSet, basename='rating')
 
 urlpatterns = [
+    path('', include(router.urls)),
 
+    path('register', RegisterView.as_view(), name='registrations'),
+    path('login', LoginView.as_view(), name = 'login'),
+    path('logout', LogoutView.as_view(), name = 'logout'),
 
     path('users/me/', UserProfileDetailAPIView.as_view(), name='user-detail'),
     path('groups/<int:group_id>/', GroupDetailAPIView.as_view(), name='group-detail'),
@@ -45,5 +49,4 @@ urlpatterns = [
     path('groups/<int:group_id>/ratings/', RatingListAPIView.as_view(), name='rating-list'),
     path('homeworks/<int:homework_id>/reviews/', ReviewCreateAPIView.as_view(), name='review-create'),
     path('reviews/<int:pk>/', ReviewEditAPIView.as_view(), name='review-edit'),
-    path('', include(router.urls)),
 ]
