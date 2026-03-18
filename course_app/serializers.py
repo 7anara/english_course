@@ -7,18 +7,16 @@ from .models import (
     TestQuestion, TestAnswer, StudentTestResult,
     Rating, Review
 )
-
-class UserRegisterSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
-        fields = ('username', 'email', 'password', 'first_name', 'phone_number', )
+        fields = ['username', 'email', 'password', 'first_name', 'last_name',
+                  'phone_number',]
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
         user = UserProfile.objects.create_user(**validated_data)
         return user
-
-
 
 
 class LoginSerializer(serializers.Serializer):
@@ -44,6 +42,8 @@ class LoginSerializer(serializers.Serializer):
             'refresh': str(refresh),
         }
 
+class LogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:

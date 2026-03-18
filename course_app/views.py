@@ -9,7 +9,7 @@ from .models import (UserProfile, Group, Student, Material,
                      Homework, HomeworkAnswer, CourseTest, TestQuestion,
                      TestAnswer, StudentTestResult, Rating, Review)
 from .serializers import (
-    LoginSerializer, UserProfileSerializer,
+    LoginSerializer, UserProfileSerializer, LogoutSerializer,
     GroupListSerializer, GroupDetailSerializer, GroupCreateUpdateSerializer,
     StudentJoinSerializer, StudentListSerializer, StudentDetailSerializer,
     MaterialListSerializer, MaterialDetailSerializer,
@@ -18,7 +18,7 @@ from .serializers import (
     TestQuestionSerializer, TestAnswerSerializer,
     CourseTestListSerializer, CourseTestDetailSerializer, CourseTestStudentSerializer,
     StudentTestResultSerializer,
-    RatingSerializer, ReviewSerializer, UserRegisterSerializer
+    RatingSerializer, ReviewSerializer, UserSerializer
 )
 from .filters import GroupFilter, StudentFilter, HomeworkFilter, CourseTestFilter
 from .pagination import StandardPagination
@@ -29,9 +29,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
-
 class RegisterView(generics.CreateAPIView):
-    serializer_class = UserRegisterSerializer
+    serializer_class = UserSerializer
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -54,17 +53,18 @@ class LoginView(TokenObtainPairView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class LogoutView(APIView):
-    def post(self, request):
+class LogoutView(generics.GenericAPIView):
+    serializer_class = LogoutSerializer
+
+    def post(self, request, *args, **kwargs):
         try:
-            refresh_token = request.data.get('refresh')
-            if not refresh_token:
-                return Response({'detail': 'Refresh токен не предоставлен.'}, status=status.HTTP_400_BAD_REQUEST)
+            refresh_token = request.data["refresh"]
             token = RefreshToken(refresh_token)
             token.blacklist()
-            return Response({'detail': 'Вы успешно вышли.'}, status=status.HTTP_200_OK)
-        except TokenError as e:
-            return Response({'detail': 'Недействительный токен.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        except Exception:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
 
 class UserProfileDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
 
